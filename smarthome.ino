@@ -7,11 +7,18 @@
 
 ESP8266WiFiMulti WiFiMulti;
 
+#define SERVER "16.16.16.247"
+#define USER "admin"
+#define PASS "123"
+
 #define PIR D8
 #define SERVO D1
 #define LED D0
 Servo s;
 int hay;
+String jwt;
+int sesion = 0;
+
 void setup()
 {
   Serial.begin(9600);
@@ -22,7 +29,7 @@ void setup()
 
   Serial.println("Conectando...");
   WiFi.mode(WIFI_STA);
-  WiFiMulti.addAP("IOT", "12345678");
+  WiFiMulti.addAP("Wifi", "123456789");
 }
 
 void loop()
@@ -42,16 +49,17 @@ void loop()
 
    if ((WiFiMulti.run() == WL_CONNECTED)) {
       Serial.println("Conexion exitosa");
-      
+      if(sesion) post();
+      else login();
    }
    
-  delay(1000);
+  delay(10000);
 }
 
 void login(){
   WiFiClient client;
   HTTPClient http;
-  if(http.begin(client, "http://localhost/smarthome/login.php?user=admin&pass=123")){
+  if(http.begin(client, "http://" SERVER "/smarthome/login.php?user="USER"&pass="PASS)){
     int httpCode = http.GET();
     if(httpCode > 0){
       if(httpCode == HTTP_CODE_OK){
@@ -61,6 +69,10 @@ void login(){
         String r = json.substring(10,1);
         Serial.println(r);
         if(r == "y"){
+          int inicio = json.indexOf("token");
+          int fin = json.indexOf("}");
+          jwt = json.substring(inicio+8,fin-1);
+          sesion = 1;
           Serial.println("Login exitoso");
         }else{
           Serial.println("Login fallido");
@@ -70,4 +82,22 @@ void login(){
       Serial.println("Error GET");
     }
   }
+}
+
+void post(){
+  WiFiClient client;
+  HTTPClient http;
+  http.begin(client, "http://" SERVER "/smarthome/registro.php");
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  http.addHeader("Authorization", jwt);
+  int httpCode = http.POST("sensor=P&valor="+String(hay));
+  if (httpCode > 0) {
+      if (httpCode == HTTP_CODE_OK) {
+        const String& payload = http.getString();
+        Serial.println(payload);
+      }
+    } else {
+      Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    }
+    http.end();
 }
