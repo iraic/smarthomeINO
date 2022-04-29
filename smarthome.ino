@@ -93,7 +93,7 @@ void post(){
   http.addHeader("Authorization", jwt);
   int httpCode = http.POST("sensor=P&valor="+String(hay));
   if (httpCode > 0) {
-      if (httpCode == HTTP_CODE_OK) {
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_CREATED) {
         const String& payload = http.getString();
         Serial.println(payload);
       }else{
