@@ -66,13 +66,14 @@ void login(){
         String json = http.getString();
         Serial.println(json);
         int i,j;
-        String r = json.substring(10,1);
+        String r = json.substring(10,11);
         Serial.println(r);
         if(r == "y"){
           int inicio = json.indexOf("token");
           int fin = json.indexOf("}");
           jwt = json.substring(inicio+8,fin-1);
           sesion = 1;
+          Serial.println(jwt);
           Serial.println("Login exitoso");
         }else{
           Serial.println("Login fallido");
@@ -95,6 +96,8 @@ void post(){
       if (httpCode == HTTP_CODE_OK) {
         const String& payload = http.getString();
         Serial.println(payload);
+      }else{
+        Serial.println("No se registro el sensor");
       }
     } else {
       Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
